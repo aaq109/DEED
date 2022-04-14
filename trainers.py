@@ -11,10 +11,11 @@ import torch.optim as optim
 import torch.nn as nn
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from statsmodels.distributions.empirical_distribution import ECDF
 
 from data_reader import DataReader_MNIST
 from model import MNISTmodel, Decoder
-from utils import get_device, euclid_dist, flatten
+from utils import get_device, euclid_dist, flatten, cosDist, epsilon
 from losses import edl_loss
 
 
