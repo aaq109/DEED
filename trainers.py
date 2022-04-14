@@ -6,6 +6,7 @@ MNIST experiment
 
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -274,6 +275,7 @@ class DEEDtrainer:
         plt.fill_between(x, df_ecdf['upper'], df_ecdf['lower'], 
                          alpha=0.4, label='Confidence Band')
         plt.xlim(-0.1, 2)
+        plt.ylim(0,1)
     
 
             
