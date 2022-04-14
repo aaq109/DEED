@@ -6,6 +6,7 @@ MNIST experiment
 
 import torch
 import numpy as np
+from scipy.spatial import distance
 
 def get_device():
     use_cuda = torch.cuda.is_available()
