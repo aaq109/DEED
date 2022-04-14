@@ -250,8 +250,7 @@ class DEEDtrainer:
         ecdf = ECDF(y_raw['cosine_dist'])
         x = np.round(np.linspace(0, 2, 10000),4)
         eps = epsilon(n=y_raw.shape[0])
-        df_ecdf = pd.DataFrame(ecdf(x), index=x)
-        df_ecdf['ecdf'] = ecdf(x)      
+        df_ecdf = pd.DataFrame(ecdf(x), index=x, columns=['ecdf'])      
         
         plt.rcParams.update({'font.size': 20})
         fig, ax = plt.subplots(figsize=(8,8))
