@@ -190,25 +190,31 @@ class DEEDtrainer:
     def test_regressor(self):
         outputs = np.empty([1,2*self.kpred]) 
         targets = np.empty([1,2])
+        out_raw = np.empty([1,3])
         tr = np.array(list(self.data.emb_3d.values()))
         self.new_model.eval()
 
         for batch_idx, (data, target) in enumerate(tqdm(self.data.data_loaders['test'])):
-            k = self.new_model(data.to(self.device))       
-            out = k.detach().cpu().numpy()
+            x = target.shape[0]
+            out = self.new_model(data.to(self.device))       
+            out = out.detach().cpu().numpy()
+            newarr = out.reshape(x*2,3)
+            out_raw = np.append(out_raw,newarr,0)
 
             k = [flatten([list(np.argsort(euclid_dist(j,tr))[0:1*self.kpred]) for j in i]) for i in out]
             outputs = np.append(outputs, np.array(k), 0)
             targets = np.append(targets, target.numpy(), 0)
+            
       
         outputs = np.delete(outputs, (0), axis=0)
         targets = np.delete(targets, (0), axis=0)
+        out_raw = np.delete(out_raw, (0), axis=0)
 
-        self.regressor_out = (outputs,targets)
+        self.regressor_out = (outputs,targets,out_raw)
         
         
     def plot_regressor(self):
-        y_pred, y_true = self.regressor_out[0], self.regressor_out[1]
+        y_pred, y_true, y_raw = self.regressor_out[0], self.regressor_out[1], self.regressor_out[2]
         score = 0
         for i in range(y_true.shape[0]):
             score = score + len(np.intersect1d(y_true[i], y_pred[i]))
@@ -232,6 +238,42 @@ class DEEDtrainer:
         plt.title('Class scores after regression')
         plt.xlabel('Classes')
         plt.ylabel('Accuracy')
+
+        
+        y_raw = pd.DataFrame([[i] for i in y_raw],columns = ["Estimated"])
+        y_raw['Label'] = y_true.reshape(y_true.shape[0]*2,1)
+        y_raw['Ground_truth'] = y_raw['Label'].map(self.data.emb_3d)
+        y_raw = y_raw[y_raw['Label'].isin(self.zs)]
+        y_raw['cosine_dist'] = y_raw.apply(lambda row: cosDist(row), axis=1)
+
+        ecdf = ECDF(y_raw['cosine_dist'])
+        x = np.round(np.linspace(0, 2, 10000),4)
+        eps = epsilon(n=y_raw.shape[0])
+        df_ecdf = pd.DataFrame(ecdf(x), index=x)
+        df_ecdf['ecdf'] = ecdf(x)      
+        
+        plt.rcParams.update({'font.size': 20})
+        fig, ax = plt.subplots(figsize=(8,8))
+        
+        plt.plot(x, df_ecdf['ecdf'], 'b-')  
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.spines['bottom'].set_color('#DDDDDD')
+        ax.tick_params(bottom=False, left=False)
+        ax.set_axisbelow(True)
+        ax.yaxis.grid(True, color='#EEEEEE')
+        ax.xaxis.grid(True, color='#EEEEEE')
+        plt.xlabel('Distance from true label')
+        plt.ylabel('Proportion of OOD examples')
+        r = df_ecdf[df_ecdf.index==0.2].ecdf
+        plt.plot([0.2 for i in range(1000)], np.linspace(0,r,1000),'grey',linestyle='--')
+        plt.plot(np.linspace(0,0.2,1000), [r for i in range(1000)],'grey',linestyle='--')
+        df_ecdf['upper'] = pd.Series(ecdf(x), index=x).apply(lambda x: min(x + eps, 1.))
+        df_ecdf['lower'] = pd.Series(ecdf(x), index=x).apply(lambda x: max(x - eps, 0.))
+        plt.fill_between(x, df_ecdf['upper'], df_ecdf['lower'], 
+                         alpha=0.4, label='Confidence Band')
+        plt.xlim(-0.1, 2)
     
 
             
