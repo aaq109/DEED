@@ -30,4 +30,4 @@ def epsilon(n, alpha=0.05):
 
 
 def cosDist(t):
-    return distance.cosine([t[0],t[1],t[2]], [t['GT_z'],t['GT_x'],t['GT_y']])
+    return distance.cosine(t['Estimated'], t['Ground_truth'])
