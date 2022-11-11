@@ -13,6 +13,8 @@ from random import choice
 from PIL import Image
 from tqdm import tqdm 
 
+random.seed(0)
+
 def sample_coordinate(high, size):
     if high > 0:
         return np.random.randint(high, size=size)
