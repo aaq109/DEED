@@ -92,11 +92,11 @@ class DEEDtrainer:
                 S = alpha[:,n] + alpha[:,m]
                 scores_p = (alpha[:,n] / S).data.cpu().numpy()
                 u = (alpha[:,n]* alpha[:,m]) / ((S +1)*(S*S))
-                u_norm = u / u.max(1, keepdim=True)[0]            
+                #u_norm = u / u.max(1, keepdim=True)[0]            
 
                 outputs = np.append(outputs, scores_p, 0)
                 targets = np.append(targets, target, 0)
-                lbl_uncertainty = np.append(lbl_uncertainty, u_norm.data.cpu().numpy(), 0)
+                lbl_uncertainty = np.append(lbl_uncertainty, u.data.cpu().numpy(), 0)
             else:
                 outputs = np.append(outputs, k.data.cpu().numpy(), 0)
                 targets = np.append(targets, target.numpy(), 0)
@@ -131,6 +131,7 @@ class DEEDtrainer:
         print('Overall accuracy:', np.mean([self.class_scores[i] for i in range(30)]))
         if self.edl:
             uncertainty = np.delete(uncertainty, (0), axis=0)
+            uncertainty = uncertainty / uncertainty.max(axis=0)
             class_uncertainty = {i:[] for i in range(self.num_classes)}
             for i,j in enumerate(y_true):
                 ind = y_pred[i]
