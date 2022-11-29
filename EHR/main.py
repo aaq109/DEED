@@ -1,7 +1,8 @@
   
 """
-DEED EHR
-@author: aaq109
+DEep Evidential Doctor - DEED
+EHR experiment
+@author: awaash
 """
 
 import argparse
