@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 from data_extractor import DataReaderRHIP
 from data_processor import DataProcessorRHIP
-from han_model import HierarchialAttentionNetwork
+from model import HierarchialAttentionNetwork
 from utils import compute_auc, HANDataset, load_word2vec_embeddings, edl_loss, adjust_learning_rate
 
 seed= 0
