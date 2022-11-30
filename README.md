@@ -2,7 +2,7 @@
 Deep Evidential Doctor
 
 MNIST experiments:
-1. Download and save mnist_train.csv and mnist_test.csv in MNIST/Data
+1. Download and save mnist_train.csv and mnist_test.csv from https://www.kaggle.com/oddrationale/mnist-in-csv in MNIST/Data
 2. Run python prep_data.py
 3. Run python main.py
 
