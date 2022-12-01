@@ -86,7 +86,7 @@ def adjust_learning_rate(optimizer, scale_factor):
     :param scale_factor: factor to scale by
     """
 
-    print("\nDECAYING learning rate.")
+    print("\nDecaying learning rate.")
     for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr'] * scale_factor
     print("The new learning rate is %f\n" % (optimizer.param_groups[0]['lr'],))
