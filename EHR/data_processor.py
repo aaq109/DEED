@@ -120,7 +120,7 @@ class DataProcessorRHIP:
         logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
         # Initialize and train the model (this will take some time)
-        model = gensim.models.word2vec.Word2Vec(sentences=sentences, vector_size=emb_size, workers=8, window=20, min_count=5,
+        model = gensim.models.word2vec.Word2Vec(sentences=sentences, vector_size=emb_size, workers=8, window=20, min_count=10,
                                             sg=sg)
 
         # Normalize vectors and save model
