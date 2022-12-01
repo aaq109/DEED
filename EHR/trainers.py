@@ -66,23 +66,20 @@ class DEED_EHRtrainer:
         self.model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune=True)
         
 
-        
-        
-
     def train_classifier(self, args):
         optimizer = optim.Adam(self.model.parameters(),lr=1e-3)
         criterion = nn.BCEWithLogitsLoss()
         self.model.to(self.device)
+        self.model.train()
         for iteration in range(1,args.iterations):
             losses = []
-            self.model.train()
             for i, (documents, sentences_per_document, words_per_sentence, labels, hdf, patients) in enumerate(self.train_loader):
                 #i, (documents, sentences_per_document, words_per_sentence, labels, hdf, patients) = next(iter(enumerate(self.train_loader)))
                 documents = documents.to(self.device)  # (batch_size, sentence_limit, word_limit)
                 sentences_per_document = sentences_per_document.squeeze(1).to(self.device)  # (batch_size)
                 words_per_sentence = words_per_sentence.to(self.device)  # (batch_size, sentence_limit)
                 labels = labels.squeeze(1).to(self.device)  # (batch_size)
-                hdf = hdf.squeeze().to(self.device)  # (batch_size, sentence_limit, 6)                optimizer.zero_grad()
+                hdf = hdf.squeeze().to(self.device)  # (batch_size, sentence_limit, 6)
                 scores, word_alphas, sentence_alphas, _= self.model((documents, sentences_per_document,
                                                      words_per_sentence, hdf))  
                 optimizer.zero_grad()
@@ -100,8 +97,7 @@ class DEED_EHRtrainer:
     def test_classifier(self):
         m = nn.Sigmoid()
         self.model.eval()
-        all_scores, all_labels, all_uncertainties = [], [], []
-        
+        all_scores, all_labels, all_uncertainties = [], [], []   
         self.model.to(self.device)
 
         for i, (documents, sentences_per_document, words_per_sentence, labels, hdf, patients) in enumerate(self.test_loader):
@@ -113,8 +109,6 @@ class DEED_EHRtrainer:
             hdf = hdf.squeeze().to(self.device)  # (batch_size, sentence_limit, 6)                optimizer.zero_grad()
             scores, word_alphas, sentence_alphas, _= self.model((documents, sentences_per_document,
                                                      words_per_sentence, hdf))  
-
-            
             if self.edl:
                 alpha = torch.exp(scores) + 1
                 n = torch.arange(0,alpha.shape[1],2)
@@ -132,11 +126,9 @@ class DEED_EHRtrainer:
             
             all_scores.extend(scores.data.cpu().numpy().tolist())
             all_labels.extend(labels.data.cpu().numpy().tolist())
-            
-        
+                    
         roc_auc, fpr, tpr = compute_auc(np.array(all_scores), np.array(all_labels))
         class_uncertainty = {self.id2label[i]:[] for i,j in roc_auc.items()}
-
 
         if self.edl:     
             all_uncertainties = np.array(all_uncertainties)/ np.array(all_uncertainties).max(axis=0)
@@ -166,8 +158,6 @@ class DEED_EHRtrainer:
         df.columns = ['Categories','AUC','Uncertainty']
         df['prev_train'] = df['Categories'].map(prev_train)
         df['prev_test'] = df['Categories'].map(prev_test)
-
-
 
         plt.rcParams.update({'font.size': 18})
         sns.set_style("white")
