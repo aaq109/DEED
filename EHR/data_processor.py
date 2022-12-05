@@ -82,7 +82,7 @@ class DataProcessorRHIP:
             print('Word map saved')
 
     # Encode and pad
-        print('Encoding and padding {0} data...\n'.format(tp)
+        print('Encoding and padding {0} data...\n'.format(tp))
         encoded_train_docs = list(map(lambda doc: list(
             map(lambda s: list(map(lambda w: self.word_map.get(w, self.word_map['<unk>']), s)) + [0] * (word_limit - len(s)),
                 doc)) + [[0] * word_limit] * (sentence_limit - len(doc)), docs))
