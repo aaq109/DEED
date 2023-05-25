@@ -13,10 +13,10 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from statsmodels.distributions.empirical_distribution import ECDF
-
+from netcal.presentation import ReliabilityDiagram
 from data_reader import DataReader_MNIST
 from model import MNISTmodel, Decoder
-from utils import get_device, euclid_dist, flatten, cosDist, epsilon
+from utils import get_device, euclid_dist, flatten, cosDist, epsilon, cal_ece
 from losses import edl_loss
 
 
@@ -28,12 +28,13 @@ class DEEDtrainer:
         self.zs = args.zfs
         self.lbl_enc_dim = args.lbl_enc_dim
         self.num_classes = args.num_classes
+        self.use_attn = args.use_evidential_attention
         self.data = DataReader_MNIST(zfs=args.zfs,batch_size=args.batch_size)
         self.device = get_device()
         self.edl = args.edl
         self.neg_evd_w = args.neg_evd_w
         self.kpred = args.kpred
-        self.model = MNISTmodel(self.num_classes,self.edl).to(self.device) 
+        self.model = MNISTmodel(self.num_classes,self.edl,self.use_attn).to(self.device) 
         self.iterations1 = args.iterations1
         self.iterations2 = args.iterations2
         self.class_uncertainty = {i:1 for i in range(self.num_classes)}
@@ -157,6 +158,44 @@ class DEEDtrainer:
             plt.title('Class scores')
             plt.xlabel('Classes')
             plt.ylabel('Accuracy')
+   
+    def plot_ece(self, nbins=10):
+        y_prob, y_true, uncertainty = self.classifier_out[0], self.classifier_out[1], self.classifier_out[2]
+        uncertainty = np.delete(uncertainty, (0), axis=0)
+        uncertainty = uncertainty / uncertainty.max(axis=0)
+
+        discard_n = []
+        for i,k in enumerate(y_true):
+            if np.intersect1d(self.zs,k).size==0:
+                discard_n.append(i)
+                
+        y_prob = y_prob[discard_n,:]
+        y_true = y_true[discard_n,:]
+        uncertainty = uncertainty[discard_n,:]
+        
+        y_pred = y_prob.argsort(axis=1)[:,[-2,-1]]
+        y_correct_classified = []
+        uncer_pred = []
+        for ind,i in enumerate(y_pred):
+            for k in i:
+                if int(k) in y_true[ind]:
+                    y_correct_classified.append(1)
+                else: 
+                    y_correct_classified.append(0) 
+
+        y_correct_classified = np.array(y_correct_classified)
+        uncer_pred = np.take_along_axis(uncertainty, y_pred, axis=1)  
+        uncer_pred = 1-uncer_pred.ravel()
+        self.ece_raw = pd.DataFrame(data=[uncer_pred,y_correct_classified]).T
+        self.ece_raw.columns=['uncer','label']
+        print('ECE = ',cal_ece(self.ece_raw, nbins))
+
+        diagram = ReliabilityDiagram(nbins, equal_intervals=True)
+        diagram.plot(uncer_pred,y_correct_classified, tikz=False, filename="edl_ece1.pdf")
+        plt.close()
+        diagram = ReliabilityDiagram(nbins, equal_intervals=False)
+        diagram.plot(uncer_pred,y_correct_classified, tikz=False, filename="edl_ece2.pdf")
+        plt.close()
    
     
     def train_regressor(self):             
