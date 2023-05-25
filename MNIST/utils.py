@@ -7,6 +7,8 @@ MNIST experiment
 import torch
 import numpy as np
 from scipy.spatial import distance
+from netcal.metrics import ECE
+
 
 def get_device():
     use_cuda = torch.cuda.is_available()
@@ -28,3 +30,7 @@ def epsilon(n, alpha=0.05):
 
 def cosDist(t):
     return distance.cosine(t['Estimated'], t['Ground_truth'])
+
+def cal_ece(df, nbins):
+    ece = ECE(nbins)
+    return ece.measure(np.array(df['uncer']), np.array(df['label']))
