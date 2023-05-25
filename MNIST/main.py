@@ -32,7 +32,10 @@ parser.add_argument('--kpred', default=1,
                     help='TopK predictions')
 parser.add_argument('--neg_evd_w', default=0.1,
                     help='Scaling evidential loss if edl=True')
-
+parser.add_argument('--use_evidential_attention', default=False,
+                    help='Use multi-head evidential during classification. Only for experiment')
+                    
+                    
 args = parser.parse_args(args=[])
 args.tied = True
 
@@ -42,7 +45,7 @@ dt = DEEDtrainer(args)
 dt.train_classifier()
 dt.test_classifier()
 dt.plot_classifier()
-
+dt.plot_ece()
 if args.edl:
     dt.train_regressor()
     dt.test_regressor()
